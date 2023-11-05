@@ -65,7 +65,7 @@ Note that `S` is multiplied with a scale factor `mod` that is kept as `1.0` duri
 ⚠️ quote from the paper ⚠️
 > An obvious approach would be to directly optimize the covariance matrix Σ to obtain 3D Gaussians that represent the radiance field. However, covariance matrices have physical meaning only when they are positive semi-definite. For our optimization of all our pa- rameters, we use gradient descent that cannot be easily constrained to produce such valid matrices, and update steps and gradients can very easily create invalid covariance matrices.
 
-The design of optimizing `R` and `S` separately is not a random choice. It is a trick we call "reparametrization". By making it expressed as $RSS^TR^T$, it is guaranteed to be **always** positive semi-definite (matrix of the form $A^TA$ is always positive semi-definite).
+The design of optimizing the 3D covariance by decomposing it to `R` and `S` separately is not a random choice. It is a trick we call "reparametrization". By making it expressed as $RSS^TR^T$, it is guaranteed to be **always** positive semi-definite (matrix of the form $A^TA$ is always positive semi-definite).
 
 ------------------------
 
