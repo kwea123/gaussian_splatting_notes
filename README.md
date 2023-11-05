@@ -4,13 +4,13 @@ The text version of my explanatory stream (Chinese with English CC) on gaussian 
 # 📖 Table of contents
 
 - [Introduction](#-introduction)
-- Foward pass
+- [Foward pass](#%EF%B8%8F-forward-pass)
   - placeholder
 - Backward pass
   - placeholder
 
 # 📑 Introduction
-This guide aims at deciphering the formulae in the rasterization process (*forward* and *backward*). **It is only focused on these two parts**, and I want to provide as many details as possible since here lies the core of the algorithm. I will paste relative code from the [original repo](https://github.com/graphdeco-inria/gaussian-splatting) to help you identify where to look at.
+This guide aims at deciphering the formulae in the rasterization process (*forward* and *backward*). **It is only focused on these two parts**, and I want to provide as many details as possible since here lies the core of the algorithm. I will paste related code from the [original repo](https://github.com/graphdeco-inria/gaussian-splatting) to help you identify where to look at.
 
 Before continuing, please read the [original paper](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/3d_gaussian_splatting_high.pdf) of how the gaussian splatting algorithm works in a big picture. Also note that the full algorithm has other important parts such as point densification and pruning which *won't* be covered in this article since I think those parts are relatively easier to understand.
 
