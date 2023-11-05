@@ -61,6 +61,13 @@ S[2][2] = mod * scale.z;
 ```
 Note that `S` is multiplied with a scale factor `mod` that is kept as `1.0` during training.
 
+In inference, this value (`scaling_modifier`) and be modified on
+```python3
+# https://github.com/graphdeco-inria/gaussian-splatting/blob/main/gaussian_renderer/__init__.py#L18
+def render(..., scaling_modifier = 1.0, ...):
+```
+to control the scale of the gaussians. In their demo they showed how it looks by setting this number to something <1 (shrinking the size). Theoretically this value can also be set >1 to increase the size.
+
 ------------------------
 ⚠️ quote from the paper ⚠️
 > An obvious approach would be to directly optimize the covariance matrix Σ to obtain 3D Gaussians that represent the radiance field. However, covariance matrices have physical meaning only when they are positive semi-definite. For our optimization of all our pa- rameters, we use gradient descent that cannot be easily constrained to produce such valid matrices, and update steps and gradients can very easily create invalid covariance matrices.
@@ -68,13 +75,6 @@ Note that `S` is multiplied with a scale factor `mod` that is kept as `1.0` duri
 The design of optimizing the 3D covariance by decomposing it to `R` and `S` separately is not a random choice. It is a trick we call "reparametrization". By making it expressed as $RSS^TR^T$, it is guaranteed to be **always** positive semi-definite (matrix of the form $A^TA$ is always positive semi-definite).
 
 ------------------------
-
-In inference, this value (`scaling_modifier`) and be modified on
-```python3
-# https://github.com/graphdeco-inria/gaussian-splatting/blob/main/gaussian_renderer/__init__.py#L18
-def render(..., scaling_modifier = 1.0, ...):
-```
-to control the scale of the gaussians. In their demo they showed how it looks by setting this number to something <1 (shrinking the size). Theoretically this value can also be set >1 to increase the size.
 
 Next, we need to get 3 things: `radius`, `uv` and `cov2D` (equivalently its inverse `conic`) which are the 2D attributes of a gaussian projected on an image.
 
