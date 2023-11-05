@@ -38,7 +38,7 @@ self._opacity = torch.empty(0)        # opacity
 # https://github.com/graphdeco-inria/gaussian-splatting/blob/main/scene/gaussian_model.py#L215
 ```
 
-To project the gaussian onto a 2D image, we must go through some more computations to transform the attribues to 2D:
+To project the gaussian onto a 2D image, we must go through some more computations to transform the attributes to 2D:
 
 ### 1-1. Compute derived attributes (radius, uv, cov2D)
 
