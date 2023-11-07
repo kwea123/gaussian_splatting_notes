@@ -91,6 +91,17 @@ glm::mat3 Vrk = glm::mat3(
 glm::mat3 cov = glm::transpose(T) * glm::transpose(Vrk) * T;
 ```
 
+Let's put ![1](https://github.com/graphdeco-inria/gaussian-splatting/assets/11364490/2819c95a-e216-4352-8739-90c692b13c91) (remember the 2D and 3D covariance matrices are symmetric) for the calculation that we're going to do in the following.
+
+Its inverse `conic` (honestly I don't know why they've chosen a such bad variable name, calling it `cov_inv` would be 100x better) can be expressed as ![1](https://github.com/graphdeco-inria/gaussian-splatting/assets/11364490/6cefc42e-273b-4b30-8eab-1db944670f3e) (actually it's a very useful thing to remember: to invert a 2D matrix, you invert the diagonal, put negative signs on the off-diagonal entries and finally put a `1/det` in front of everything).
+```cuda
+// https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu#L219
+float det = (cov.x * cov.z - cov.y * cov.y);
+// https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu#L222-L223
+float det_inv = 1.f / det;
+float3 conic = { cov.z * det_inv, -cov.y * det_inv, cov.x * det_inv };  // since the covariance matrix is symmetric, we only need to save the upper triangle
+```
+
 --------------------------------
 💡 A small trick to ensure the numerical stability of the inverse of `cov` 💡
 ```cuda
@@ -106,7 +117,7 @@ Here we add `0.3` to the diagonal to make it invertible. Why is this true? Let's
 
 Having `cov` in hand, we can now proceed to compute the `radius` of a gaussian.
 
-Theoretically, when projecting an ellipsoid onto an image, you get an *ellipse*, not a circle. However, storing the attributes of an ellipse is much more complicated: you need to store the center, the long and short axis lengths and the orientation; whereas for a circle, you only its center and the radius. Therefore, the authors choose to approximate the projection with a circle circumscribing the ellipse (see the following figure). This is what the `radius` attribute represents.
+Theoretically, when projecting an ellipsoid onto an image, you get an *ellipse*, not a circle. However, storing the attributes of an ellipse is much more complicated: you need to store the center, the long and short axis lengths and the orientation; whereas for a circle, you only need its center and the radius. Therefore, the authors choose to approximate the projection with a circle circumscribing the ellipse (see the following figure). This is what the `radius` attribute represents.
 
 <img width="277" alt="" src="https://github.com/lumalabs/luma-pynerf/assets/11364490/63f25c15-18cd-4be9-8e61-cc5db715c308">
 
@@ -122,9 +133,40 @@ Fortunately, the analogy applies to *any* dimension, just be aware that the "rad
 
 We said $r = 3 \cdot \sqrt{var}$. How to, then, get the $var$ of a 2D gaussian given its covariance matrix? It is the **two eigenvalues** of the covariance matrix. Therefore, the problem now comes down to the calculation of the two eigenvalues.
 
-I could've given you the answer directly (if you don't want to read this part, jump [here]), but out of personal preference (I love linear-algebra), I want to detail it more. First of all, for a square matrix $A$ we say it has eigenvalue $\lambda$ with the associated eigenvector $x$ if $\lambda$ and $x$ satisfy $Ax = \lambda x, x \neq 0$. There are as many eigenvalues (and associated eigenvectors) as the dimension of $A$ if we operate in the domain of complex numbers.
+I could've given you the answer directly, but out of personal preference (I ❤️ linear-algebra), I want to detail it more. First of all, for a square matrix $A$ we say it has eigenvalue $\lambda$ with the associated eigenvector $x$ if $\lambda$ and $x$ satisfy $Ax = \lambda x, x \neq 0$. There are as many eigenvalues (and associated eigenvectors) as the dimension of $A$ if we operate in the domain of complex numbers.
 
-In general, to calculate *all* eigenvalues of $A$, we solve the equation $det(A-x\cdot I) = 0$ (the variable being $x$).
+In general, to calculate *all* eigenvalues of $A$, we solve the equation $det(A-x\cdot I) = 0$ (the variable being $x$). If we
+replace with the `cov` matrix we have above, this equation can be expressed as $(a-x)(c-x)-b^2 = 0$ which is a quadratic equation that all of us are familiar with.
+
+The solutions (eigenvalues) are `lambda1` and `lambda2` in the following code
+```cuda
+// https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu#L219
+float det = (cov.x * cov.z - cov.y * cov.y);  // this is a*c - b*b in our expression
+...
+// https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu#L229-L231
+float mid = 0.5f * (cov.x + cov.z);
+float lambda1 = mid + sqrt(max(0.1f, mid * mid - det));  // I'm not too sure what 0.1 serves here
+float lambda2 = mid - sqrt(max(0.1f, mid * mid - det));
+```
+Then we finally get `radius` as 3 times the square root of the bigger eigenvalue:
+```cuda
+https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu#L232
+float my_radius = ceil(3.f * sqrt(max(lambda1, lambda2)));
+```
+
+Last thing, which is probably the most obvious, is the `uv` (image coordinates) of the gaussian. It is done via a simple projection from the 3D center:
+```cuda
+// https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu#L197-L200
+float3 p_orig = { orig_points[3 * idx], orig_points[3 * idx + 1], orig_points[3 * idx + 2] };
+float4 p_hom = transformPoint4x4(p_orig, projmatrix);
+float p_w = 1.0f / (p_hom.w + 0.0000001f);
+float3 p_proj = { p_hom.x * p_w, p_hom.y * p_w, p_hom.z * p_w };
+...
+// https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu#L233
+float2 point_image = { ndc2Pix(p_proj.x, W), ndc2Pix(p_proj.y, H) };  // I like to call it uv
+```
+
+Phew, we finally got the three quantities we need to know: **radius, uv and conic**. Let's move on to the next part.
 
 ### 1-2. Compute which tile each gaussian covers
 
