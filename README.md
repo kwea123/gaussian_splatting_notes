@@ -93,7 +93,7 @@ glm::mat3 cov = glm::transpose(T) * glm::transpose(Vrk) * T;
 
 Let's put ![1](https://github.com/graphdeco-inria/gaussian-splatting/assets/11364490/2819c95a-e216-4352-8739-90c692b13c91) (remember the 2D and 3D covariance matrices are symmetric) for the calculation that we're going to do in the following.
 
-Its inverse `conic` (honestly I don't know why they've chosen a such bad variable name, calling it `cov_inv` would be 100x better) can be expressed as ![1](https://github.com/graphdeco-inria/gaussian-splatting/assets/11364490/6cefc42e-273b-4b30-8eab-1db944670f3e) (actually it's a very useful thing to remember: to invert a 2D matrix, you invert the diagonal, put negative signs on the off-diagonal entries and finally put a `1/det` in front of everything).
+Its inverse `conic` (honestly I don't know why they've chosen such a bad variable name, calling it `cov_inv` would've been 100x better) can be expressed as ![1](https://github.com/graphdeco-inria/gaussian-splatting/assets/11364490/6cefc42e-273b-4b30-8eab-1db944670f3e) (actually it's a very useful thing to remember: to invert a 2D matrix, you invert the diagonal, put negative signs on the off-diagonal entries and finally put a `1/det` in front of everything).
 ```cuda
 // https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu#L219
 float det = (cov.x * cov.z - cov.y * cov.y);
