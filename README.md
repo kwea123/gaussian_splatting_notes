@@ -151,7 +151,7 @@ float lambda2 = mid - sqrt(max(0.1f, mid * mid - det));
 Then we finally get `radius` as 3 times the square root of the bigger eigenvalue:
 ```cuda
 https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu#L232
-float my_radius = ceil(3.f * sqrt(max(lambda1, lambda2)));
+float my_radius = ceil(3.f * sqrt(max(lambda1, lambda2)));  // ceil() to make it at least 1 because we operate in pixel space
 ```
 
 Last thing, which is probably the most obvious, is the `uv` (image coordinates) of the gaussian. It is done via a simple projection from the 3D center:
