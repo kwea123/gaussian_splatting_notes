@@ -135,8 +135,8 @@ We said $r = 3 \cdot \sqrt{var}$. How to, then, get the $var$ of a 2D gaussian g
 
 I could've given you the answer directly, but out of personal preference (I ❤️ linear-algebra), I want to detail it more. First of all, for a square matrix $A$ we say it has eigenvalue $\lambda$ with the associated eigenvector $x$ if $\lambda$ and $x$ satisfy $Ax = \lambda x, x \neq 0$. There are as many eigenvalues (and associated eigenvectors) as the dimension of $A$ if we operate in the domain of complex numbers.
 
-In general, to calculate *all* eigenvalues of $A$, we solve the equation $det(A-x\cdot I) = 0$ (the variable being $x$). If we
-replace with the `cov` matrix we have above, this equation can be expressed as $(a-x)(c-x)-b^2 = 0$ which is a quadratic equation that all of us are familiar with.
+In general, to calculate *all* eigenvalues of $A$, we solve the equation $det(A-λ\cdot I) = 0$ (the variable being $λ$). If we
+replace with the `cov` matrix we have above, this equation can be expressed as $(a-λ)(c-λ)-b^2 = 0$ which is a quadratic equation that all of us are familiar with.
 
 The solutions (eigenvalues) are `lambda1` and `lambda2` in the following code
 ```cuda
