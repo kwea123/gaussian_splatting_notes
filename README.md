@@ -168,6 +168,14 @@ float2 point_image = { ndc2Pix(p_proj.x, W), ndc2Pix(p_proj.y, H) };  // I like 
 
 Phew, we finally got the three quantities we need to know: **radius, uv and conic**. Let's move on to the next part.
 
-### 1-2. Compute which tile each gaussian covers
+### 1-2. Compute which tiles each gaussian covers
+
+Before computing the color of an image, the authors introduces a special but *very effective* way that significantly accelerates rendering. Specifically, we divide the whole image into `tiles` which are **16x16** pixel blocks like the following (the tiles might exceed image borders if height/width is not a multiple of 16):
+
+<img width="513" alt="2" src="https://github.com/kwea123/gaussian_splatting_notes/assets/11364490/15a5f829-5608-4d90-93ef-7d0b12d2af79">
+
+We also order the tiles in row-major order (left-top is tile 0, the one on its right is 1, etc). The number below the tile number is its tile coordinates.
+
+Then, we compute which tiles each gaussian covers by using the `uv` and `radius` computed above. See the following figure:
 
 ## 2. Compute the color of each pixel
